@@ -1,12 +1,11 @@
-import 'package:esilv_shop/model/cart.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 
 void main() {
-  runApp(ChangeNotifierProvider(
-    create: (BuildContext context) => Cart(),
+  //ProviderScope : conserve l'état de tous les providers Riverpod (obligatoire)
+  runApp(const ProviderScope(
     child: EsilvShop(),
   ));
 }

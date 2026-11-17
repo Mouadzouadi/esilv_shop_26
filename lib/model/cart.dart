@@ -1,19 +1,35 @@
 import 'package:esilv_shop/model/product.dart';
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class Cart extends ChangeNotifier{
-  final List<Product> _products = [];
-  List<Product> get products => _products;
+part 'cart.g.dart';
 
-  void add(Product product){
-    _products.add(product);
-    notifyListeners();
+//@riverpod : build_runner génère cartProvider dans cart.g.dart
+@riverpod
+class Cart extends _$Cart {
+  //État initial : panier vide
+  @override
+  List<Product> build() {
+    return [];
   }
 
+  //On remplace state par une NOUVELLE liste => Riverpod prévient les widgets
+  void add(Product product) {
+    state = [...state, product];
+  }
+
+  //Retire un seul exemplaire du produit (la 1re occurrence)
   void remove(Product product) {
-    _products.removeWhere((p) => p.id == product.id);
-    notifyListeners();
+    final newState = [...state];
+    newState.remove(product);
+    state = newState;
   }
 
+  //Vide le panier (après le paiement)
+  void clear() {
+    state = [];
+  }
 
+  //Somme des prix en centimes (fold), puis conversion en euros
+  String get priceInEuros =>
+      "${(state.fold(0, (prv, actual) => prv + actual.price) / 100).toStringAsFixed(2)}€";
 }

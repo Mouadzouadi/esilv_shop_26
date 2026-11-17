@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:esilv_shop/page/cart_page.dart';
 import 'package:esilv_shop/page/detail_product_page.dart';
 import 'package:esilv_shop/page/list_product_page.dart';
+import 'package:esilv_shop/page/payment_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart';
@@ -14,9 +15,12 @@ class EsilvShop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //.router : la navigation est confiée à GoRouter (_router)
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'Esilv Shop',
       theme: ThemeData(
+        //Toute la palette de l'app est générée à partir du rouge
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
       ),
@@ -30,8 +34,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => ListProductPage(),
+      //Routes imbriquées sous '/' => la flèche retour ramène à la liste
       routes: [
         GoRoute(
+          //:idProduct = paramètre lu dans l'URL (/product/5)
           path: 'product/:idProduct',
           builder: (context, state) {
             final idProductNullable = int.tryParse(
@@ -40,6 +46,7 @@ final _router = GoRouter(
             if (idProductNullable == null) {
               return Scaffold(body: Center(child: Text("Produit introuvable")));
             }
+            //Charge le produit depuis l'API, puis affiche la page Détail
             return FutureBuilder(
               future: getProductById(idProductNullable),
               builder: (context, asyncSnapshot) {
@@ -53,7 +60,17 @@ final _router = GoRouter(
             );
           },
         ),
-        GoRoute(path: 'cart', builder: (context, state) => CartPage()),
+        GoRoute(
+          path: 'cart',
+          builder: (context, state) => CartPage(),
+          routes: [
+            //Imbriquée sous cart => /cart/payment, retour vers le panier
+            GoRoute(
+              path: 'payment',
+              builder: (context, state) => const PaymentPage(),
+            ),
+          ],
+        ),
       ],
     ),
   ],

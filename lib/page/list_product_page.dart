@@ -3,29 +3,33 @@ import 'dart:convert';
 import 'package:esilv_shop/model/cart.dart';
 import 'package:esilv_shop/model/product.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart';
-import 'package:provider/provider.dart';
 
-class ListProductPage extends StatelessWidget {
+class ListProductPage extends ConsumerWidget {
   const ListProductPage({super.key});
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    //watch : la page se reconstruit quand le panier change (badge)
+    final cartProducts = ref.watch(cartProvider);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text('appbarTitle'),
+        title: const Text('Boutique'),
         actions: [
           IconButton(
             onPressed: () => context.go('/cart'),
             icon: Badge.count(
-              count: context.watch<Cart>().products.length,
+              count: cartProducts.length,
               child: const Icon(Icons.shopping_cart_outlined),
             ),
           ),
         ],
-
       ),
+      //Affiche la liste quand les produits sont arrivés, sinon un loader
       body: FutureBuilder(
         future: fetchProducts(),
         builder: (context, asyncSnapshot) {
@@ -38,27 +42,28 @@ class ListProductPage extends StatelessWidget {
                 title: Text(products[index].title, maxLines: 1),
                 subtitle: Text(
                   products[index].getPrice(),
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 leading: Image.network(products[index].image, width: 80),
                 trailing: TextButton(
                   onPressed: () {
-                    context.read<Cart>().add(products[index]);
+                    //read : on appelle une action, sans s'abonner
+                    ref.read(cartProvider.notifier).add(products[index]);
                   },
                   child: Text("Ajouter".toUpperCase()),
                 ),
               ),
             );
           }
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
   }
 
+  //GET sur l'API, puis chaque Map JSON est convertie en Product
   Future<List<Product>> fetchProducts() async {
     final response = await get(Uri.parse('https://fakestoreapi.com/products'));
-    //Récupérer les produits en List<Map>
     if (response.statusCode == 200) {
       final List<dynamic> products = json.decode(response.body);
       return products
